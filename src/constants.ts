@@ -1,1 +1,10 @@
 export const TDB_FILE_EXT = '.tdb';
+export const TABLE_FILE_EXT = '.ta';
+export const MEMO_FILE_EXT = '.memo';
+export const REF_FILE_EXT = '.ref';
+export const DB_TABLE_SEP = '\n';
+export const REF_LENGTH = 7;
+export const FIELD_SEP = String.fromCharCode(29);
+export const FIELD_PROP_SEP = String.fromCharCode(31);
+export const HEAD_ATTR_SEP = String.fromCharCode(28);
+export const FILE_ENCODING: BufferEncoding = 'utf-8';

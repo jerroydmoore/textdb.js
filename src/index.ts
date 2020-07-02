@@ -1,0 +1,1 @@
+export { Textdb } from './textdb';

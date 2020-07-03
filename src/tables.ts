@@ -82,6 +82,14 @@ export async function createTable(
   ]);
 }
 
+export async function removeTableFiles(tablePathPrefix: string): Promise<void> {
+  await Promise.all([
+    fs.unlink(tablePathPrefix + TABLE_FILE_EXT),
+    fs.unlink(tablePathPrefix + MEMO_FILE_EXT),
+    fs.unlink(tablePathPrefix + REF_FILE_EXT),
+  ]);
+}
+
 export class TextdbTables {
   constructor() {
     //

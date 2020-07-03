@@ -3,7 +3,7 @@ import { DB_TABLE_SEP, TDB_FILE_EXT } from './constants';
 import { promises as fs, constants as fsConstants } from 'fs';
 import * as path from 'path';
 import { createTableOptions, fieldProperty } from './types';
-import { createTable } from './tables';
+import { createTable, removeTableFiles } from './tables';
 
 export class Textdb {
   protected workingDir = '';
@@ -73,8 +73,14 @@ export class Textdb {
     await fs.writeFile(databasePath, '');
   }
 
-  static removeDatabase() {
-    //
+  async removeDatabase(): Promise<void> {
+    await this.isReady;
+    this.isReady = Promise.reject('textdb operation failed: the database was removed');
+
+    const promises = Array.from(this.tables).map((internalTableName) =>
+      removeTableFiles(path.join(this.workingDir, internalTableName)),
+    );
+    await Promise.all([...promises, fs.unlink(this.databasePath)]);
   }
   /**
    * Create a table
@@ -108,20 +114,41 @@ export class Textdb {
   protected async _writeTableNamesToDb(): Promise<void> {
     await fs.writeFile(this.databasePath, Array.from(this.tables).join(DB_TABLE_SEP));
   }
-  getTableList() {
-    //
+
+  async removeTable(tableName: string): Promise<void> {
+    await this.isReady;
+
+    const internalTableName = this.getExternalTableName(tableName);
+    if (!this._isTable(internalTableName)) {
+      throw new InvalidArgumentError('removeTable failed: table does not exist');
+    }
+    await removeTableFiles(path.join(this.workingDir, internalTableName));
+    this.tables.delete(internalTableName);
+    this._writeTableNamesToDb();
   }
-  isTable() {
-    //
+
+  async getTableList(): Promise<Array<string>> {
+    await this.isReady;
+    return Array.from(this.tables).map(this.getExternalTableName);
   }
-  getTable() {
-    //
+  async isTable(tableName: string): Promise<boolean> {
+    await this.isReady;
+
+    return this._isTable(this.getInternalTableName(tableName));
   }
-  version() {
+  protected _isTable(internalTableName: string): boolean {
+    return this.tables.has(internalTableName);
+  }
+
+  getTable(): void {
     //
   }
 
   protected getInternalTableName(tableName: string): string {
     return `${this.dbname}_${tableName}`;
+  }
+
+  protected getExternalTableName(internalTableName: string): string {
+    return internalTableName.substring(this.dbname.length + 1);
   }
 }

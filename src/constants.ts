@@ -8,3 +8,4 @@ export const FIELD_SEP = String.fromCharCode(29);
 export const FIELD_PROP_SEP = String.fromCharCode(31);
 export const HEAD_ATTR_SEP = String.fromCharCode(28);
 export const FILE_ENCODING: BufferEncoding = 'utf-8';
+export const BUFFER_SIZE = 4096;

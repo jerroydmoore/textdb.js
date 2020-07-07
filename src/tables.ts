@@ -1,5 +1,5 @@
 import { constants as fsConstants, promises as fs } from 'fs';
-import { createTableOptions, fieldProperty, fieldType } from './types';
+import { createTableOptions, fieldProperty, fieldType, tableHeader } from './types';
 import {
   FIELD_SEP,
   FIELD_PROP_SEP,
@@ -9,8 +9,10 @@ import {
   REF_FILE_EXT,
   REF_LENGTH,
   TABLE_FILE_EXT,
+  BUFFER_SIZE,
 } from './constants';
 import { InvalidArgumentError } from './errors';
+import { fopen } from './php-fs-api-extended';
 
 /**
  * Create a table
@@ -90,10 +92,83 @@ export async function removeTableFiles(tablePathPrefix: string): Promise<void> {
   ]);
 }
 
-export class TextdbTables {
-  constructor() {
-    //
+export async function openTable(tablePathPrefix: string): Promise<TextdbTable> {
+  const tableFile = tablePathPrefix + TABLE_FILE_EXT;
+  const memoFile = tablePathPrefix + MEMO_FILE_EXT;
+  const refFile = tablePathPrefix + REF_FILE_EXT;
+  try {
+    await Promise.all([
+      fs.access(tableFile, fsConstants.F_OK | fsConstants.R_OK | fsConstants.W_OK),
+      fs.access(memoFile, fsConstants.F_OK | fsConstants.R_OK | fsConstants.W_OK),
+      fs.access(refFile, fsConstants.F_OK | fsConstants.R_OK | fsConstants.W_OK),
+    ]);
+  } catch {
+    throw new Error('failed table operation: table files do not exist or are not writable and readable');
   }
+  const header = await readTableHeader(tableFile);
+  return new TextdbTable(tableFile, memoFile, refFile, header);
+}
+
+export async function readTableHeader(tableFile: string): Promise<tableHeader> {
+  const fh = await fopen(tableFile, fsConstants.O_RDONLY, { bufferSize: BUFFER_SIZE });
+
+  let rawValue: string;
+
+  rawValue = await fh.getStringUntil(HEAD_ATTR_SEP);
+  const hFieldHeaderLength = parseInt(rawValue, 10);
+
+  rawValue = await fh.read(hFieldHeaderLength);
+  const hFields = rawValue
+    .split(FIELD_SEP)
+    .map((x) => x.split(FIELD_PROP_SEP))
+    .map(([, type, length, name]) => ({
+      name,
+      type: <fieldType>type,
+      length: parseInt(length, 10),
+    }));
+
+  rawValue = await fh.getStringUntil(HEAD_ATTR_SEP);
+  const hRecordLength = parseInt(rawValue, 10);
+
+  const hCurrentIdPosition = fh.tell();
+  rawValue = await fh.getStringUntil(HEAD_ATTR_SEP);
+  const hCurrentId = parseInt(rawValue, 10);
+
+  const hUnallocRecordAddrPosition = fh.tell();
+  rawValue = await fh.getStringUntil(HEAD_ATTR_SEP);
+  const hUnallocRecordAddr = parseInt(rawValue, 10);
+
+  rawValue = await fh.getStringUntil(HEAD_ATTR_SEP);
+  const hMemoChunkSize = parseInt(rawValue, 10);
+
+  const hRecordPosition = fh.tell();
+  await fh.close();
+  return {
+    hFieldHeaderLength,
+    hFields,
+    hRecordLength,
+    hCurrentId,
+    hCurrentIdPosition,
+    hUnallocRecordAddr,
+    hUnallocRecordAddrPosition,
+    hMemoChunkSize,
+    hRecordPosition,
+  };
+}
+
+export class TextdbTable {
+  protected tableFile: string;
+  protected memoFile: string;
+  protected refFile: string;
+  protected header: tableHeader;
+
+  constructor(tableFile: string, memoFile: string, refFile: string, header: tableHeader) {
+    this.tableFile = tableFile;
+    this.memoFile = memoFile;
+    this.refFile = refFile;
+    this.header = header;
+  }
+
   addField(): void {
     //
   }

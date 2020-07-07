@@ -14,3 +14,15 @@ export type fieldProperty = {
   type: fieldType;
   length?: number;
 };
+
+export type tableHeader = {
+  hFieldHeaderLength: number;
+  hFields: Array<fieldProperty>;
+  hRecordLength: number;
+  hCurrentId: number;
+  hCurrentIdPosition: number;
+  hUnallocRecordAddr: number;
+  hUnallocRecordAddrPosition: number;
+  hMemoChunkSize: number;
+  hRecordPosition: number;
+};

@@ -10,9 +10,12 @@ import {
   REF_LENGTH,
   TABLE_FILE_EXT,
   BUFFER_SIZE,
+  NULL_REF,
 } from './constants';
 import { InvalidArgumentError } from './errors';
 import { fopen } from './php-fs-api-extended';
+import { createNewMemoFile } from './memos';
+import { serializeRef } from './utils';
 
 /**
  * Create a table
@@ -59,8 +62,8 @@ export async function createTable(
     hRecordLength += field.length;
   }
 
-  const hCurrentId = '0'.padEnd(REF_LENGTH, ' ');
-  const hUnusedMemoId = '-1'.padEnd(REF_LENGTH, ' ');
+  const hCurrentId = serializeRef(0);
+  const hUnusedMemoId = serializeRef(NULL_REF);
   const hMemoChunkLength = (options?.memoChunkLength || 100) + REF_LENGTH + 1;
   const header =
     hFields.length +
@@ -75,11 +78,9 @@ export async function createTable(
     hMemoChunkLength +
     HEAD_ATTR_SEP;
 
-  const memoBlockZero = '-1'.padEnd(hMemoChunkLength, ' ');
-
   await Promise.all([
     fs.writeFile(tablePath, header, FILE_ENCODING),
-    fs.writeFile(tablePathPrefix + MEMO_FILE_EXT, memoBlockZero, FILE_ENCODING),
+    createNewMemoFile(tablePathPrefix + MEMO_FILE_EXT, hMemoChunkLength),
     fs.writeFile(tablePathPrefix + REF_FILE_EXT, '', FILE_ENCODING),
   ]);
 }

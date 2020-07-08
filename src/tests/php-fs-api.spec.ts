@@ -1,9 +1,9 @@
 import * as os from 'os';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { F_OK, R_OK, O_CREAT, W_OK } from 'constants';
 
 import { fopen, SEEK } from '../php-fs-api';
-import { F_OK, R_OK, O_CREAT, W_OK } from 'constants';
 import { FILE_ENCODING } from '../constants';
 import { OperationAlreadyInProgressError } from '../errors';
 

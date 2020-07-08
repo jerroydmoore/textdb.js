@@ -18,4 +18,3 @@ export class OperationAlreadyInProgressError extends Error {
     this.name = 'OperationAlreadyInProgressError';
   }
 }
-

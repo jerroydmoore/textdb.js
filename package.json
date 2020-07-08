@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/jerroydmoore/textdb.js#readme",
   "devDependencies": {
+    "@types/debug": "^4.1.5",
     "@types/jest": "^26.0.3",
     "@types/node": "^14.0.14",
     "@typescript-eslint/eslint-plugin": "^3.5.0",
@@ -53,5 +54,8 @@
     "*.{js,ts,tsx}": [
       "eslint --fix"
     ]
+  },
+  "dependencies": {
+    "debug": "^4.1.1"
   }
 }
